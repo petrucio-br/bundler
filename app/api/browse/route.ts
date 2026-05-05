@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const tab = url.searchParams.get("tab") ?? "eligible";
 
-  if (tab === "maybe" || tab === "no") {
+  if (tab === "yes" || tab === "maybe" || tab === "no") {
     const result = await getSwipedGames(session.userId, tab);
     if ("error" in result) {
       if (result.error === "no_swiper_context") {

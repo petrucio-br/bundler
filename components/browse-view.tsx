@@ -29,7 +29,7 @@ interface BrowseGame {
   matchedExcludedTags: string[];
 }
 
-type Tab = "eligible" | "maybe" | "no";
+type Tab = "eligible" | "yes" | "maybe" | "no";
 type Sort = "tag-overlap" | "follower-count" | "recency";
 
 const SORT_LABELS: Record<Sort, string> = {
@@ -40,6 +40,7 @@ const SORT_LABELS: Record<Sort, string> = {
 
 const TAB_LABELS: Record<Tab, string> = {
   eligible: "Eligible",
+  yes: "Yes (pending)",
   maybe: "Maybe",
   no: "No",
 };
@@ -385,6 +386,10 @@ function GameCard({
               No
             </button>
           </>
+        ) : tab === "yes" ? (
+          <div className="flex-1 text-xs text-white/50 italic text-center py-1.5">
+            Waiting on them. They&apos;ll appear in Matches if they say Yes back.
+          </div>
         ) : tab === "maybe" ? (
           <>
             <button
@@ -433,9 +438,11 @@ function EmptyState({ tab }: { tab: Tab }) {
   const message =
     tab === "eligible"
       ? "No eligible games right now. Either no other devs have signed up yet, or your filters are too narrow. Try widening your required-tag list or lowering the match count."
-      : tab === "maybe"
-        ? "Nothing here yet. Games you mark Maybe in Eligible will land here."
-        : "Nothing here yet. Games you mark No in Eligible will land here.";
+      : tab === "yes"
+        ? "No pending Yes swipes. Games you say Yes to that haven't reciprocated yet will appear here. Once they Yes you back, they move to Matches."
+        : tab === "maybe"
+          ? "Nothing here yet. Games you mark Maybe in Eligible will land here."
+          : "Nothing here yet. Games you mark No in Eligible will land here.";
   return (
     <div className="bg-bg-elevated border border-dashed border-border rounded-lg p-6 text-center text-sm text-white/50">
       {message}

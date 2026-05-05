@@ -26,6 +26,30 @@ hook for any consequences.
 
 ---
 
+## Tour
+
+**The landing page.** Sign in with Steam, three minutes of setup, you're matching with other indie devs.
+
+<img src="screenshots/01_landing.png" alt="Bundler landing page" width="800">
+
+**My Game.** Verify your Steam game once via a temporary forum post + the [developer] tag, then track your stats: self-reported wishlist count (Steam doesn't expose these publicly so we trust devs to report), review count, release date, dev activity dates, your hand-curated tag list, and contact info that gets revealed only on mutual matches.
+
+<img src="screenshots/02_myGame.png" alt="My Game section showing verified game with wishlists, reviews, dates, tag editor, and contact info" width="800">
+
+**Match Preferences.** Set what kind of games you'd cross-promote with. Required tags + match count, excluded tags + match count, minimum wishlist threshold, free-text notes shown to matched devs. Smart defaults seeded from your own game's profile.
+
+<img src="screenshots/03_matchPrefs.png" alt="Match Preferences showing required and excluded tag inputs with autocomplete, sliders for match counts, wishlist threshold, and notes" width="800">
+
+**Browse.** Mutual filtering surfaces only games that pass your filters AND whose filters you also pass. Yes / Maybe / No per card. Tag chips highlight green when matched against your required list, red when matched against your excluded list.
+
+<img src="screenshots/04_browse.png" alt="Browse view with eligible game card showing tags, wishlists, action buttons" width="800">
+
+**Matches.** Mutual yes reveals contact info on both sides. Email + Discord shared, plus the dev's notes. Bundler doesn't host the conversation - you take it from there.
+
+<img src="screenshots/05_matches.png" alt="Matches view with contact reveal showing email and Discord username" width="800">
+
+---
+
 ## Stack
 
 - Next.js 15 (App Router) + TypeScript

@@ -79,11 +79,13 @@ export async function fetchGameInfo(appId: string): Promise<SteamGameInfo | null
     priceCentsUsd = 0;
   }
 
-  // Review count. Storefront returns `recommendations.total` for released and Early Access games.
-  // Unreleased games have no reviews and the field is missing - treat as null (not 0) so the UI
-  // can distinguish "no reviews because unreleased" from "released with zero reviews."
-  const reviewCount =
-    typeof d.recommendations?.total === "number" ? d.recommendations.total : null;
+  // Review count. The Storefront API USED to populate `recommendations.total` reliably,
+  // but Steam appears to have deprecated that path - many released games now return no
+  // recommendations field at all even when they have plenty of reviews. The canonical
+  // source is the dedicated `appreviews` endpoint, which always returns a query_summary
+  // with total_reviews. Fetch that in parallel with the Storefront / SteamSpy calls.
+  // Falls back to recommendations.total if appreviews itself fails.
+  const reviewCount = await fetchReviewCount(appId, d.recommendations?.total);
 
   // Tags. SteamSpy is the primary source (user-voted Steam tags), but it lags significantly
   // for unreleased / freshly-announced games - their crawler may take days/weeks to pick up
@@ -108,6 +110,37 @@ export async function fetchGameInfo(appId: string): Promise<SteamGameInfo | null
     tags,
     tagsSource,
   };
+}
+
+async function fetchReviewCount(
+  appId: string,
+  storefrontFallback: number | undefined
+): Promise<number | null> {
+  // Returns aggregate review count via the appreviews query_summary.
+  // num_per_page=0 fetches just the summary (no review bodies), keeping the payload small.
+  // language=all + purchase_type=all gives the global lifetime count, matching what Steam
+  // displays on the public store page.
+  const url = `https://store.steampowered.com/appreviews/${encodeURIComponent(
+    appId
+  )}?json=1&num_per_page=0&language=all&purchase_type=all`;
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Bundler/0.1 (https://bundler.games)" },
+      next: { revalidate: 60 * 60 }, // 1h cache - reviews change slowly enough
+    });
+    if (res.ok) {
+      const data: AppReviewsResponse = await res.json();
+      if (data.success === 1) {
+        const total = data.query_summary?.total_reviews;
+        if (typeof total === "number" && total >= 0) return total;
+      }
+    }
+  } catch {
+    // Fall through to the fallback below.
+  }
+  // Fallback to whatever the storefront returned (for unreleased / non-game types where
+  // appreviews may be unhelpful). Null if neither source has a number.
+  return typeof storefrontFallback === "number" ? storefrontFallback : null;
 }
 
 async function fetchSteamSpyTags(appId: string): Promise<string[]> {
@@ -157,4 +190,15 @@ interface StorefrontAppData {
 
 interface SteamSpyResponse {
   tags?: Record<string, number>;
+}
+
+interface AppReviewsResponse {
+  success?: number;
+  query_summary?: {
+    total_reviews?: number;
+    total_positive?: number;
+    total_negative?: number;
+    review_score?: number;
+    review_score_desc?: string;
+  };
 }

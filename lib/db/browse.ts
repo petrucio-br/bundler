@@ -212,7 +212,9 @@ export async function getEligiblePool(
 }
 
 /**
- * Get games this user has swiped in a specific direction. Used for the Maybe and No tabs.
+ * Get games this user has swiped in a specific direction. Used for the Yes / Maybe / No tabs.
+ * For direction='yes', games that already have a match are filtered out - those live in
+ * the Matches section, not Yes (Yes = "I said yes, waiting on them").
  */
 export async function getSwipedGames(
   userId: string,
@@ -246,10 +248,26 @@ export async function getSwipedGames(
     return { error: "lookup_failed" };
   }
 
+  // For Yes tab: filter out games that have an active match. Matched games
+  // belong in the Matches section; the Yes tab is for "pending" yes-swipes.
+  let matchedGameIds: Set<string> | null = null;
+  if (direction === "yes") {
+    const { data: matchRows } = await supabase
+      .from("matches")
+      .select("game_a_id, game_b_id")
+      .or(`game_a_id.eq.${swiper.gameId},game_b_id.eq.${swiper.gameId}`);
+    matchedGameIds = new Set<string>();
+    for (const m of matchRows ?? []) {
+      const otherId = m.game_a_id === swiper.gameId ? m.game_b_id : m.game_a_id;
+      matchedGameIds.add(otherId);
+    }
+  }
+
   const games: BrowseGame[] = [];
   for (const row of data ?? []) {
     const game = Array.isArray(row.games) ? row.games[0] : row.games;
     if (!game) continue;
+    if (matchedGameIds && matchedGameIds.has(game.id)) continue;
     const prefs = Array.isArray(game.bundle_preferences)
       ? game.bundle_preferences[0]
       : game.bundle_preferences;

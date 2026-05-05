@@ -377,12 +377,11 @@ function VerifiedCard({ claim }: { claim: ClaimState }) {
 // =============================================================================
 
 function GameStats({ claim }: { claim: ClaimState }) {
+  // "-" for unknown (API didn't return a count), explicit number when we have one.
+  // We used to show "0" for released games with null - misleading because it conflated
+  // "no reviews yet" with "we never got the data."
   const reviewLabel =
-    claim.reviewCount == null
-      ? claim.releaseStatus === "unreleased"
-        ? "-"
-        : "0"
-      : formatInt(claim.reviewCount);
+    claim.reviewCount == null ? "-" : formatInt(claim.reviewCount);
   const releaseLabel = formatReleaseLabel(claim.releaseDate, claim.releaseStatus);
   const firstUpdateLabel = formatDateLabel(claim.firstUpdateDate);
   const lastUpdateLabel = formatDateLabel(claim.lastUpdateDate);
@@ -397,7 +396,13 @@ function GameStats({ claim }: { claim: ClaimState }) {
         <Stat
           label="Reviews"
           value={reviewLabel}
-          hint={claim.releaseStatus === "unreleased" ? "No reviews until the game is released" : undefined}
+          hint={
+            claim.reviewCount == null
+              ? claim.releaseStatus === "unreleased"
+                ? "No reviews until the game is released"
+                : "Steam didn't return a review count for this game. Hit Refresh from Steam to retry."
+              : undefined
+          }
         />
         <Stat label="Release" value={releaseLabel} />
         <Stat
