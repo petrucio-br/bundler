@@ -78,7 +78,7 @@ export function ProfileForm() {
         <div>
           <h2 className="text-xl font-semibold">Contact info</h2>
           <p className="text-sm text-white/60 mt-1">
-            Shared with matched devs so they can reach out about a bundle. Steam doesn't give us
+            Shared with matched devs so they can reach out about a cross-promo (bundle, link swap, news shoutout, whatever). Steam doesn't give us
             your email, so add it here. At least one (email or Discord) is strongly recommended.
           </p>
         </div>

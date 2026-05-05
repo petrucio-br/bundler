@@ -82,7 +82,7 @@ export function BrowseView() {
         if (!r.ok) {
           const data = await r.json().catch(() => ({}));
           if (data.error === "no_setup") {
-            setError("Save your bundle preferences above to start browsing.");
+            setError("Save your match preferences above to start browsing.");
             return null;
           }
           setError("Couldn't load games.");

@@ -77,7 +77,8 @@ export function MatchesView() {
           <h2 className="text-xl font-semibold">Matches</h2>
           <p className="text-sm text-white/60 mt-1">
             Devs who said Yes to your game and you said Yes to theirs. Reach out via the contact
-            info below to discuss the bundle. Bundler doesn't host the conversation.
+            info below to discuss whatever you want - a Steam bundle, a store-page link swap,
+            a news-post shoutout, or any other cross-promo. Bundler doesn't host the conversation.
           </p>
         </div>
         <span className="text-sm text-white/50">{matches.length} match{matches.length === 1 ? "" : "es"}</span>
@@ -89,7 +90,7 @@ export function MatchesView() {
         <p className="text-white/50 text-sm py-4">Loading...</p>
       ) : matches.length === 0 ? (
         <div className="bg-bg-elevated border border-dashed border-border rounded-lg p-6 text-center text-sm text-white/50">
-          No matches yet. Browse eligible games above and mark Yes on the ones you'd bundle with.
+          No matches yet. Browse eligible games above and mark Yes on the ones you'd cross-promote with.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

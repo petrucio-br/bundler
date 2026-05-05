@@ -135,9 +135,10 @@ export function PreferencesForm() {
     <section className="bg-bg-card border border-border rounded-xl p-6 space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold">Bundle preferences</h2>
+          <h2 className="text-xl font-semibold">Match preferences</h2>
           <p className="text-sm text-white/60 mt-1">
-            What kind of games would you bundle with? Other devs whose games match your filters
+            What kind of games would you cross-promote with? Bundles, store-page link swaps,
+            news-post shoutouts - anything mutual. Other devs whose games match your filters
             (and who have you in their filters) will see your game in their pool.
           </p>
         </div>
@@ -218,7 +219,7 @@ export function PreferencesForm() {
             wishlist counts via any public API - only each dev's own partner manager dashboard does.
             Bundler asks devs to report their own number and trust each other. If a number looks
             suspicious, eyeball the game's store page, follower count from SteamDB extension, and
-            social presence to gut-check before committing to a bundle.
+            social presence to gut-check before committing to anything.
           </p>
         </div>
 
@@ -232,7 +233,7 @@ export function PreferencesForm() {
         <div>
           <label className="block text-sm font-medium mb-1">Notes (optional)</label>
           <p className="text-xs text-white/50 mb-2">
-            Anything you want a potential bundle partner to know. Shown in the match handoff. Max 500 chars.
+            Anything you want a potential cross-promo partner to know. Shown in the match handoff. Max 500 chars.
           </p>
           <textarea
             rows={3}
@@ -240,7 +241,7 @@ export function PreferencesForm() {
             value={prefs.notes}
             onChange={(e) => setPrefs({ ...prefs, notes: e.target.value })}
             className="w-full bg-bg-elevated border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent resize-y"
-            placeholder="e.g. Looking for partners for a strategy bundle around Q3. EU timezone, prefer fast email replies."
+            placeholder="e.g. Open to bundles, store-page link swaps, news-post shoutouts. EU timezone, prefer fast email replies."
           />
           <p className="text-xs text-white/40 mt-1 text-right">{prefs.notes.length} / 500</p>
         </div>

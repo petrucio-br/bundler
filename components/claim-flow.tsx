@@ -416,7 +416,7 @@ function GameStats({ claim }: { claim: ClaimState }) {
         pre-launch audience metric. First update approximates when the page went live - a low
         wishlist count on a page that's only days old is a sign of newness, not low interest, since
         wishlists need time to accumulate. Last update is the dead-game signal: long gaps suggest
-        the dev has moved on and is unlikely to be looking for bundle partners.
+        the dev has moved on and is unlikely to be looking for cross-promo partners.
       </p>
     </div>
   );

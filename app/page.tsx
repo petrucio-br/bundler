@@ -24,7 +24,7 @@ export default async function HomePage({
         <div className="space-y-3">
           <h1 className="text-5xl font-bold tracking-tight">Bundler</h1>
           <p className="text-xl text-white/70">
-            Find indie devs whose games would pair well with yours in a Steam bundle.
+            Find indie devs whose games would pair well with yours - for bundles, store-page links, news shoutouts, or any other cross-promotion.
           </p>
         </div>
 
@@ -34,8 +34,8 @@ export default async function HomePage({
             <ol className="text-white/70 space-y-1 list-decimal list-inside">
               <li>Sign in with Steam.</li>
               <li>Claim your game and verify ownership by posting a temporary short code in your game's Steam discussion forum (which carries your [developer] tag automatically). You can delete the post immediately after it's verified.</li>
-              <li>Set the kind of games you'd bundle with - required tags, exclusions, minimum wishlist count.</li>
-              <li>Browse or search the pool. Mark interest. When two devs both say yes, you both see each other's contact info.</li>
+              <li>Set the kind of games you'd cross-promote with - required tags, exclusions, minimum wishlist count.</li>
+              <li>Browse or search the pool. Mark interest. When two devs both say yes, you both see each other's contact info and can take the conversation off-platform.</li>
             </ol>
           </div>
 

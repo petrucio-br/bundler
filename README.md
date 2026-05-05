@@ -1,8 +1,11 @@
 # Bundler
 
-Tinder-for-bundle-partners for indie devs on Steam. Sign in with Steam, claim your
-game, set your bundle preferences, find devs who'd be a good bundle fit, get
-contact info on mutual matches.
+Cross-promo matchmaking for indie devs on Steam. Sign in with Steam, claim your
+game, set your match preferences, find compatible partners. The name comes from
+the canonical use case (Steam bundles), but mutual-yes matches work just as well
+for store-page link swaps, news-post shoutouts, or any other cross-promotional
+move where two indie devs want to put each other's games in front of each other's
+audiences.
 
 Open source under MIT. See `LICENSE`.
 
@@ -222,9 +225,9 @@ MIT. See `LICENSE`.
 
 ## About
 
-Bundler was built by [Petrucio](https://x.com/PetrucioBR) at [Lone Piggy](https://x.com/LonePiggyGames) as part of the launch campaign for [Kegs of Eternity](https://store.steampowered.com/app/4641550), a deck-building roguelite dungeon crawler shipping on Steam in early 2027. The matching pain was real - finding bundle partners as a solo dev is mostly Discord DMs and luck - so I built the tool I wished existed.
+Bundler was built by [Petrucio](https://x.com/PetrucioBR) at [Lone Piggy](https://x.com/LonePiggyGames) as part of the launch campaign for [Kegs of Eternity](https://store.steampowered.com/app/4641550), a deck-building roguelite dungeon crawler shipping on Steam in early 2027. The matching pain was real - finding cross-promo partners as a solo dev is mostly Discord DMs and luck - so I built the tool I wished existed.
 
-If Bundler helped you find a bundle that worked out, [wishlist AND share Kegs of Eternity](https://store.steampowered.com/app/4641550) as payment. If it didn't, do that anyway.
+If Bundler helped you find a partnership that worked out (a bundle, a store-page link swap, a news-post shoutout, anything), [wishlist AND share Kegs of Eternity](https://store.steampowered.com/app/4641550) as payment. If it didn't, do that anyway.
 
 Either way, [follow @LonePiggyGames](https://x.com/LonePiggyGames) for game updates or [open an issue](https://github.com/petrucio-br/bundler/issues) if you've got feedback.
 
