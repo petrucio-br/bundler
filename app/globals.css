@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: theme("colors.bg.DEFAULT");
+  color: #e7e9ee;
+  font-family: theme("fontFamily.sans");
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+}

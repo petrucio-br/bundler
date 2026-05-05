@@ -1,0 +1,40 @@
+{
+  "name": "bundler",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tinder-for-bundle-partners for indie devs on Steam. Mutual-yes matching, contact handoff, no middleman.",
+  "author": "Petrucio (Lone Piggy) <petrucio@lonepiggy.com> (https://x.com/PetrucioBR)",
+  "homepage": "https://bundler.games",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/petrucio-br/bundler"
+  },
+  "license": "MIT",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.45.4",
+    "cheerio": "^1.0.0",
+    "iron-session": "^8.0.4",
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.14.0",
+    "eslint-config-next": "^15.1.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.14",
+    "typescript": "^5.6.3"
+  }
+}
