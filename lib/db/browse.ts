@@ -110,7 +110,7 @@ export async function getEligiblePool(
     // Keeping this branch as a placeholder if we change the semantics.
   }
 
-  const candidates = await getCandidatePool(swiper.gameId);
+  const candidates = await getCandidatePool(userId);
   if (candidates === null) return { error: "lookup_failed" };
 
   const swipedSet = await getSwipedGameIds(swiper.gameId);
@@ -366,7 +366,9 @@ async function getSwiperContext(
   };
 }
 
-async function getCandidatePool(swiperGameId: string): Promise<CandidateRow[] | null> {
+async function getCandidatePool(swiperUserId: string): Promise<CandidateRow[] | null> {
+  // Exclude games owned by the swiper's own user (covers self + any other games they own).
+  // Self-matching is meaningless and confusing UX; a dev can't bundle with themselves.
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from("game_owners")
@@ -388,7 +390,7 @@ async function getCandidatePool(swiperGameId: string): Promise<CandidateRow[] | 
     `
     )
     .not("verified_at", "is", null)
-    .neq("game_id", swiperGameId);
+    .neq("user_id", swiperUserId);
 
   if (error) {
     console.error("getCandidatePool: query failed", error);
