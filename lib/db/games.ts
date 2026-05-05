@@ -2,6 +2,12 @@
 // All Supabase calls use the service-role client - bypasses RLS, server-only.
 // This module is responsible for keeping our `games`, `game_tags`, and `game_owners`
 // rows in sync with what Steam reports.
+//
+// Multi-game model: a single user can claim multiple games. The `game_owners.user_id`
+// column is NOT unique, only `game_owners.game_id` is (one owner per game).
+// All game-scoped data (preferences, tags, wishlist, swipes, matches) keys off game_id,
+// not user_id. The "active game" concept (in session.activeGameId) tells us which
+// of the user's games they're currently operating as.
 
 import { createServerClient } from "@/lib/supabase/server";
 import { fetchGameInfo, type SteamGameInfo } from "@/lib/steam/api";
@@ -140,12 +146,10 @@ export async function upsertGameFromSteam(
 }
 
 /**
- * Get the current game-claim state for a user.
- * Returns null when the user has no claim.
+ * Get all games claimed by a user (verified and pending), most recent first.
+ * Used to render the game switcher.
  */
-export async function getGameOwnerStateForUser(
-  userId: string
-): Promise<GameOwnerState | null> {
+export async function getAllGamesForUser(userId: string): Promise<GameOwnerState[]> {
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from("game_owners")
@@ -154,37 +158,77 @@ export async function getGameOwnerStateForUser(
       game_id,
       verification_code,
       verified_at,
+      created_at,
       games:game_id (steam_app_id, name, capsule_url, store_url, wishlist_count, wishlist_count_updated_at, review_count, release_date, release_status, first_update_date, last_update_date)
     `
     )
     .eq("user_id", userId)
-    .maybeSingle();
+    .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("getGameOwnerStateForUser: query failed", error);
-    return null;
+    console.error("getAllGamesForUser: query failed", error);
+    return [];
   }
-  if (!data) return null;
 
-  // Supabase returns the joined relation either as an object or as an array
-  // depending on relationship inference. Normalize to a single object.
-  const game = Array.isArray(data.games) ? data.games[0] : data.games;
-  if (!game) return null;
+  const out: GameOwnerState[] = [];
+  for (const row of data ?? []) {
+    const game = Array.isArray(row.games) ? row.games[0] : row.games;
+    if (!game) continue;
+    out.push({
+      gameId: row.game_id,
+      steamAppId: game.steam_app_id,
+      name: game.name,
+      capsuleUrl: game.capsule_url ?? null,
+      storeUrl: game.store_url ?? `https://store.steampowered.com/app/${game.steam_app_id}/`,
+      verificationCode: row.verification_code ?? null,
+      verifiedAt: row.verified_at ?? null,
+      wishlistCount: game.wishlist_count ?? null,
+      wishlistCountUpdatedAt: game.wishlist_count_updated_at ?? null,
+      reviewCount: game.review_count ?? null,
+      releaseDate: game.release_date ?? null,
+      releaseStatus: (game.release_status ?? "unreleased") as "unreleased" | "early_access" | "released",
+      firstUpdateDate: game.first_update_date ?? null,
+      lastUpdateDate: game.last_update_date ?? null,
+    });
+  }
+  return out;
+}
 
-  return {
-    gameId: data.game_id,
-    steamAppId: game.steam_app_id,
-    name: game.name,
-    capsuleUrl: game.capsule_url ?? null,
-    storeUrl: game.store_url ?? `https://store.steampowered.com/app/${game.steam_app_id}/`,
-    verificationCode: data.verification_code ?? null,
-    verifiedAt: data.verified_at ?? null,
-    wishlistCount: game.wishlist_count ?? null,
-    wishlistCountUpdatedAt: game.wishlist_count_updated_at ?? null,
-    reviewCount: game.review_count ?? null,
-    releaseDate: game.release_date ?? null,
-    releaseStatus: (game.release_status ?? "unreleased") as "unreleased" | "early_access" | "released",
-    firstUpdateDate: game.first_update_date ?? null,
-    lastUpdateDate: game.last_update_date ?? null,
-  };
+/**
+ * Resolve the user's "active" game given a session-stored gameId hint.
+ * - If hint matches a verified game, return it.
+ * - Else return the most recently verified game (or null if none verified).
+ *
+ * This is what most game-scoped APIs call to figure out which game to operate on.
+ */
+export async function resolveActiveGameForUser(
+  userId: string,
+  hintedGameId: string | undefined
+): Promise<GameOwnerState | null> {
+  const all = await getAllGamesForUser(userId);
+  const verified = all.filter((g) => g.verifiedAt);
+  if (hintedGameId) {
+    const match = verified.find((g) => g.gameId === hintedGameId);
+    if (match) return match;
+  }
+  return verified[0] ?? null;
+}
+
+/**
+ * Get the most recent pending (unverified) claim for a user. Used by the verify
+ * route to figure out which gameId to verify when the user just initiated a claim.
+ */
+export async function getPendingClaimForUser(userId: string): Promise<GameOwnerState | null> {
+  const all = await getAllGamesForUser(userId);
+  return all.find((g) => !g.verifiedAt) ?? null;
+}
+
+/**
+ * @deprecated Kept as a thin shim for any old call sites that still expect "the user's
+ * single game." New callers should use resolveActiveGameForUser or getAllGamesForUser.
+ */
+export async function getGameOwnerStateForUser(
+  userId: string
+): Promise<GameOwnerState | null> {
+  return resolveActiveGameForUser(userId, undefined);
 }

@@ -6,7 +6,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
-import { upsertGameFromSteam } from "@/lib/db/games";
+import { upsertGameFromSteam, resolveActiveGameForUser } from "@/lib/db/games";
 import { fetchFollowerCount } from "@/lib/steam/followers";
 
 export async function POST() {
@@ -15,22 +15,14 @@ export async function POST() {
     return NextResponse.json({ error: "not_signed_in" }, { status: 401 });
   }
 
-  const supabase = createServerClient();
-
-  // Find the user's claim and the underlying steam_app_id.
-  const { data: ownerRow, error: ownerErr } = await supabase
-    .from("game_owners")
-    .select("game_id, verified_at, games:game_id ( steam_app_id )")
-    .eq("user_id", session.userId)
-    .maybeSingle();
-  if (ownerErr || !ownerRow) {
+  // Refresh the user's currently-active game. Multi-game: the user picks which one
+  // to work with via the sidebar switcher; this respects that choice.
+  const active = await resolveActiveGameForUser(session.userId, session.activeGameId);
+  if (!active) {
     return NextResponse.json({ error: "no_claim" }, { status: 404 });
   }
-  const game = Array.isArray(ownerRow.games) ? ownerRow.games[0] : ownerRow.games;
-  const appId = game?.steam_app_id;
-  if (!appId) {
-    return NextResponse.json({ error: "no_app_id" }, { status: 500 });
-  }
+  const appId = active.steamAppId;
+  const supabase = createServerClient();
 
   // Re-pull Storefront + SteamSpy metadata.
   const refresh = await upsertGameFromSteam(appId);
@@ -53,7 +45,7 @@ export async function POST() {
           follower_count: followerCount,
           follower_count_synced_at: new Date().toISOString(),
         })
-        .eq("id", ownerRow.game_id);
+        .eq("id", active.gameId);
     }
   } catch (e) {
     console.warn("refresh-data: follower fetch threw", e);

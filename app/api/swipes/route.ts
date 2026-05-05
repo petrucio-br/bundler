@@ -6,6 +6,7 @@ import { getSession } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { createMatchIfReciprocal, getGameContact } from "@/lib/db/matches";
 import { renderMatchEmail, sendEmail } from "@/lib/email/send";
+import { resolveActiveGameForUser } from "@/lib/db/games";
 
 const VALID_DIRECTIONS = new Set(["yes", "no", "maybe"]);
 
@@ -25,22 +26,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid_direction" }, { status: 400 });
   }
 
-  const supabase = createServerClient();
-
-  // Find the swiper's verified game.
-  const { data: ownerRow } = await supabase
-    .from("game_owners")
-    .select("game_id, verified_at")
-    .eq("user_id", session.userId)
-    .maybeSingle();
-  if (!ownerRow || !ownerRow.verified_at) {
+  // Multi-game: swiper = user's active game.
+  const active = await resolveActiveGameForUser(session.userId, session.activeGameId);
+  if (!active) {
     return NextResponse.json({ error: "no_verified_game" }, { status: 403 });
   }
-  const swiperGameId = ownerRow.game_id;
+  const swiperGameId = active.gameId;
 
   if (swiperGameId === targetGameId) {
     return NextResponse.json({ error: "cannot_swipe_self" }, { status: 400 });
   }
+
+  const supabase = createServerClient();
 
   // Don't allow re-swiping a game you've already locked Yes on. The Yes is the commitment.
   const { data: existingSwipe } = await supabase
@@ -105,21 +102,18 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "missing_game_id" }, { status: 400 });
   }
 
-  const supabase = createServerClient();
-  const { data: ownerRow } = await supabase
-    .from("game_owners")
-    .select("game_id")
-    .eq("user_id", session.userId)
-    .maybeSingle();
-  if (!ownerRow) {
+  // Multi-game: revert is scoped to the user's active game.
+  const active = await resolveActiveGameForUser(session.userId, session.activeGameId);
+  if (!active) {
     return NextResponse.json({ error: "no_game" }, { status: 403 });
   }
 
+  const supabase = createServerClient();
   // Look up the swipe; refuse to revert a Yes.
   const { data: existing } = await supabase
     .from("swipes")
     .select("id, direction")
-    .eq("swiper_game_id", ownerRow.game_id)
+    .eq("swiper_game_id", active.gameId)
     .eq("target_game_id", targetGameId)
     .maybeSingle();
   if (!existing) {

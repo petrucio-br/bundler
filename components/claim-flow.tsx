@@ -39,7 +39,7 @@ const CLAIM_ERROR_MESSAGES: Record<string, string> = {
   fetch_failed: "Couldn't reach Steam right now. Try again in a moment.",
   game_already_claimed:
     "This game has already been claimed by another Bundler user. If you're the actual developer, contact support.",
-  already_has_claim: "You already have a claim in progress. Abandon it first to claim a different game.",
+  already_has_pending_claim: "You already have a pending claim that hasn't been verified yet. Finish or abandon that one before starting a new claim.",
   not_signed_in: "Your session expired. Reload the page and sign in again.",
   claim_failed: "Database error while saving your claim. Try again.",
 };
@@ -108,8 +108,8 @@ export function ClaimFlow({ initialClaim }: ClaimFlowProps) {
         setError("Couldn't abandon claim. Try again.");
         return;
       }
-      setClaim(null);
-      setPostUrlInput("");
+      // Reload so the sidebar's pending-claim banner clears and the user sees a fresh state.
+      window.location.reload();
     } finally {
       setBusy(false);
     }
@@ -131,8 +131,10 @@ export function ClaimFlow({ initialClaim }: ClaimFlowProps) {
         setError(VERIFY_ERROR_MESSAGES[reason] ?? `Verification failed: ${reason || "unknown"}`);
         return;
       }
-      // Verified! Update state.
-      setClaim((c) => (c ? { ...c, verifiedAt: new Date().toISOString() } : c));
+      // Verified! Reload so the dashboard re-fetches the user's games + active-game state
+      // server-side. In multi-game mode the verify endpoint also flipped the session's active
+      // game to the freshly-verified one, and a reload lets the sidebar pick that up.
+      window.location.reload();
     } catch {
       setError("Network error. Check your connection and try again.");
     } finally {

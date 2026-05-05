@@ -88,10 +88,12 @@ interface CandidateRow {
 const DEFAULT_PAGE_SIZE = 16;
 
 /**
- * Get the eligible pool for a user. See module comment for filter semantics.
+ * Get the eligible pool from the perspective of a specific game owned by the user.
+ * See module comment for filter semantics.
  */
 export async function getEligiblePool(
   userId: string,
+  swiperGameId: string,
   options: { sort?: SortOption; page?: number; pageSize?: number; search?: string } = {}
 ): Promise<BrowseResult | { error: "no_swiper_context" | "lookup_failed" }> {
   const sort = options.sort ?? "tag-overlap";
@@ -99,7 +101,7 @@ export async function getEligiblePool(
   const pageSize = Math.min(50, Math.max(1, options.pageSize ?? DEFAULT_PAGE_SIZE));
   const searchQuery = (options.search ?? "").trim().toLowerCase();
 
-  const swiper = await getSwiperContext(userId);
+  const swiper = await getSwiperContext(userId, swiperGameId);
   if (!swiper) return { error: "no_swiper_context" };
   if (!swiper.prefs.isActive) {
     // Swiper is paused. We still let them browse - but in this V1 we treat their pool as empty
@@ -212,15 +214,17 @@ export async function getEligiblePool(
 }
 
 /**
- * Get games this user has swiped in a specific direction. Used for the Yes / Maybe / No tabs.
+ * Get games this user's specific game has swiped in a specific direction.
+ * Used for the Yes / Maybe / No tabs.
  * For direction='yes', games that already have a match are filtered out - those live in
  * the Matches section, not Yes (Yes = "I said yes, waiting on them").
  */
 export async function getSwipedGames(
   userId: string,
+  swiperGameId: string,
   direction: "yes" | "no" | "maybe"
 ): Promise<BrowseGame[] | { error: "no_swiper_context" | "lookup_failed" }> {
-  const swiper = await getSwiperContext(userId);
+  const swiper = await getSwiperContext(userId, swiperGameId);
   if (!swiper) return { error: "no_swiper_context" };
 
   const supabase = createServerClient();
@@ -306,13 +310,15 @@ export async function getSwipedGames(
 // Internal helpers
 // =============================================================================
 
-async function getSwiperContext(userId: string): Promise<SwiperContext | null> {
+async function getSwiperContext(
+  userId: string,
+  gameId: string
+): Promise<SwiperContext | null> {
   const supabase = createServerClient();
 
-  // game_owners → games is a direct FK we can join in one query.
-  // bundle_preferences → games is also direct, but at the game_owners SELECT level there's
-  // no direct FK to bundle_preferences (the chain goes through games), and PostgREST won't
-  // auto-resolve indirect chains. So we run two queries: cleaner and rock-solid.
+  // Confirm the user owns this specific gameId, then load its prefs + tags.
+  // PostgREST can't traverse the indirect game_owners → games → bundle_preferences chain
+  // in a single SELECT, so we run two queries: cleaner and rock-solid.
   const { data: ownerRow } = await supabase
     .from("game_owners")
     .select(
@@ -323,6 +329,7 @@ async function getSwiperContext(userId: string): Promise<SwiperContext | null> {
     `
     )
     .eq("user_id", userId)
+    .eq("game_id", gameId)
     .maybeSingle();
 
   if (!ownerRow || !ownerRow.verified_at) return null;
