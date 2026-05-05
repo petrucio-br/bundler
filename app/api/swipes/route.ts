@@ -39,6 +39,18 @@ export async function POST(req: NextRequest) {
 
   const supabase = createServerClient();
 
+  // Defense in depth: reject swipes targeting any game owned by the same user.
+  // The eligible-pool query already excludes same-owner games, but the swipe API is
+  // a separate entry point and shouldn't trust client-supplied gameIds.
+  const { data: targetOwner } = await supabase
+    .from("game_owners")
+    .select("user_id")
+    .eq("game_id", targetGameId)
+    .maybeSingle();
+  if (targetOwner?.user_id === session.userId) {
+    return NextResponse.json({ error: "cannot_swipe_own_game" }, { status: 400 });
+  }
+
   // Don't allow re-swiping a game you've already locked Yes on. The Yes is the commitment.
   const { data: existingSwipe } = await supabase
     .from("swipes")
