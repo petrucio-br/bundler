@@ -130,7 +130,12 @@ export async function getEligiblePool(
     const matchedRequired = swiper.prefs.requiredTags.filter((t) =>
       candidateTagSet.has(t.toLowerCase())
     );
-    if (matchedRequired.length < swiper.prefs.requiredTagsMatchCount) continue;
+    // Match count of 0 means "no required-tag filter" - experienced bundlers want this.
+    if (
+      swiper.prefs.requiredTagsMatchCount > 0 &&
+      matchedRequired.length < swiper.prefs.requiredTagsMatchCount
+    )
+      continue;
 
     // Swiper's excluded-tag filter on the candidate.
     const matchedExcluded = swiper.prefs.excludedTags.filter((t) =>
@@ -147,7 +152,12 @@ export async function getEligiblePool(
     const candidateRequiredHits = c.prefs.requiredTags.filter((t) =>
       swiperTagSet.has(t.toLowerCase())
     ).length;
-    if (candidateRequiredHits < c.prefs.requiredTagsMatchCount) continue;
+    // Mutual: same "0 means no filter" rule applies to the candidate's required tags.
+    if (
+      c.prefs.requiredTagsMatchCount > 0 &&
+      candidateRequiredHits < c.prefs.requiredTagsMatchCount
+    )
+      continue;
 
     // Mutual: candidate's excluded-tag filter on the swiper.
     const candidateExcludedHits = c.prefs.excludedTags.filter((t) =>

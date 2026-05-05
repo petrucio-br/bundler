@@ -120,16 +120,20 @@ export function PreferencesForm() {
     );
   }
 
-  // Match count maxes can't exceed the number of tags in their bucket - otherwise the
-  // matching constraint is impossible to satisfy. Clamp visually too.
-  const requiredMatchMax = Math.max(1, Math.min(5, prefs.requiredTags.length || 1));
+  // Match count maxes can't exceed the number of tags - otherwise the constraint is
+  // impossible. Required can also be 0 (no tag filter, bundle with anything).
+  const requiredMatchMax = Math.min(5, prefs.requiredTags.length);
   const excludedMatchMax = Math.max(1, Math.min(5, prefs.excludedTags.length || 1));
 
-  // Auto-clamp values when tag arrays shrink.
-  const requiredMatchValue = Math.min(prefs.requiredTagsMatchCount, requiredMatchMax);
+  // Auto-clamp values when tag arrays shrink. For required, 0 is valid; for excluded,
+  // floor is 1 (because 0 excluded matches doesn't make semantic sense).
+  const requiredMatchValue = Math.min(
+    prefs.requiredTagsMatchCount,
+    requiredMatchMax || 0
+  );
   const excludedMatchValue = Math.min(prefs.excludedTagsMatchCount, excludedMatchMax);
 
-  const canSave = prefs.requiredTags.length > 0 && !saving;
+  const canSave = !saving;
 
   return (
     <section className="bg-bg-card border border-border rounded-xl p-6 space-y-6">
@@ -162,7 +166,11 @@ export function PreferencesForm() {
       <form onSubmit={handleSave} className="space-y-7">
         <ChipInput
           label="Required tags"
-          help={`Other games must share at least ${requiredMatchValue} of these tags to appear in your pool.`}
+          help={
+            requiredMatchValue === 0
+              ? "No tag filter active - any game can appear in your pool. Set the slider below above 0 to enforce tag matching."
+              : `Other games must share at least ${requiredMatchValue} of these tags to appear in your pool.`
+          }
           tags={prefs.requiredTags}
           onChange={(t) => setPrefs({ ...prefs, requiredTags: t })}
           autocompleteOptions={popularTags}
@@ -172,10 +180,14 @@ export function PreferencesForm() {
 
         <SliderInput
           label="Required tags - match count"
-          help={`The other game must share at least this many of your required tags. Max ${requiredMatchMax} (limited by required tag count).`}
+          help={
+            prefs.requiredTags.length === 0
+              ? "Add some required tags above to enable filtering, or leave at 0 to bundle with any game regardless of tags."
+              : `Set to 0 to ignore tags entirely (bundle with any game). Otherwise the other game must share at least this many of your required tags. Max ${requiredMatchMax} (limited by required tag count).`
+          }
           value={requiredMatchValue}
-          min={1}
-          max={requiredMatchMax}
+          min={0}
+          max={Math.max(0, requiredMatchMax)}
           disabled={prefs.requiredTags.length === 0}
           onChange={(v) => setPrefs({ ...prefs, requiredTagsMatchCount: v })}
         />
@@ -276,7 +288,7 @@ export function PreferencesForm() {
           )}
           {prefs.requiredTags.length === 0 && !error && (
             <span className="text-sm text-white/50">
-              Add at least one required tag to enable saving.
+              No tag filter active - your pool will include any game (subject to wishlist threshold and excluded tags).
             </span>
           )}
           {error && <span className="text-sm text-red-400">{error}</span>}
