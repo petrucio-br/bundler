@@ -1,12 +1,12 @@
 // Dashboard root.
-// Two paths:
-//   - User has not yet verified a game: render the ClaimFlow inline (no sidebar yet, since
-//     there's nothing else to navigate to). Sign-out lives at the top right.
-//   - User has a verified claim: render DashboardLayout with sidebar nav covering all sections.
+// Three states:
+//   - Not signed in: redirect to /
+//   - Signed in, no verified games yet: render the ClaimFlow inline (sidebar would have nothing to navigate)
+//   - Signed in, has at least one verified game: render the full DashboardLayout with sidebar + game switcher
 
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
-import { getGameOwnerStateForUser } from "@/lib/db/games";
+import { getAllGamesForUser, getPendingClaimForUser, resolveActiveGameForUser } from "@/lib/db/games";
 import { ClaimFlow } from "@/components/claim-flow";
 import { DashboardLayout } from "@/components/dashboard-layout";
 
@@ -16,13 +16,24 @@ export default async function DashboardPage() {
     redirect("/");
   }
 
-  const claim = await getGameOwnerStateForUser(session.userId);
+  const allGames = await getAllGamesForUser(session.userId);
+  const verifiedGames = allGames.filter((g) => g.verifiedAt);
+  const activeGame = await resolveActiveGameForUser(session.userId, session.activeGameId);
 
-  if (claim?.verifiedAt) {
-    return <DashboardLayout claim={claim} steamId={session.steamId} />;
+  if (verifiedGames.length > 0 && activeGame) {
+    // Has at least one verified game - show the full dashboard with sidebar.
+    return (
+      <DashboardLayout
+        activeGame={activeGame}
+        allGames={allGames}
+        steamId={session.steamId}
+      />
+    );
   }
 
-  // Pre-verification: simple centered layout with the claim flow.
+  // Pre-verification: simple centered layout with the claim flow for the user's
+  // pending (or first-time) claim.
+  const pending = await getPendingClaimForUser(session.userId);
   return (
     <main className="min-h-screen px-6 py-12">
       <div className="max-w-3xl mx-auto space-y-8">
@@ -43,7 +54,7 @@ export default async function DashboardPage() {
           </form>
         </header>
 
-        <ClaimFlow initialClaim={claim} />
+        <ClaimFlow initialClaim={pending} />
       </div>
     </main>
   );

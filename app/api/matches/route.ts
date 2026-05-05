@@ -4,14 +4,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
-import { getMatchesForUser } from "@/lib/db/matches";
+import { getMatchesForGame } from "@/lib/db/matches";
+import { resolveActiveGameForUser } from "@/lib/db/games";
 
 export async function GET() {
   const session = await getSession();
   if (!session.steamId || !session.userId) {
     return NextResponse.json({ error: "not_signed_in" }, { status: 401 });
   }
-  const matches = await getMatchesForUser(session.userId);
+  const active = await resolveActiveGameForUser(session.userId, session.activeGameId);
+  if (!active) {
+    return NextResponse.json({ matches: [] });
+  }
+  const matches = await getMatchesForGame(session.userId, active.gameId);
   return NextResponse.json({ matches });
 }
 
@@ -27,19 +32,12 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "missing_match_id" }, { status: 400 });
   }
 
-  const supabase = createServerClient();
-
-  // Find the user's game.
-  const { data: ownerRow } = await supabase
-    .from("game_owners")
-    .select("game_id")
-    .eq("user_id", session.userId)
-    .maybeSingle();
-  if (!ownerRow) {
+  const active = await resolveActiveGameForUser(session.userId, session.activeGameId);
+  if (!active) {
     return NextResponse.json({ error: "no_game" }, { status: 403 });
   }
 
-  // Look up the match and figure out which side (a or b) the user is.
+  const supabase = createServerClient();
   const { data: match } = await supabase
     .from("matches")
     .select("id, game_a_id, game_b_id")
@@ -51,9 +49,9 @@ export async function PATCH(req: NextRequest) {
 
   const update: Record<string, string> = {};
   const now = new Date().toISOString();
-  if (match.game_a_id === ownerRow.game_id) {
+  if (match.game_a_id === active.gameId) {
     update.a_dismissed_at = now;
-  } else if (match.game_b_id === ownerRow.game_id) {
+  } else if (match.game_b_id === active.gameId) {
     update.b_dismissed_at = now;
   } else {
     return NextResponse.json({ error: "not_your_match" }, { status: 403 });

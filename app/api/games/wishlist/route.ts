@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
+import { resolveActiveGameForUser } from "@/lib/db/games";
 
 const MAX_WISHLISTS = 100_000_000; // sanity ceiling
 
@@ -24,24 +25,20 @@ export async function PUT(req: NextRequest) {
   }
   const wishlistCount = Math.floor(n);
 
-  const supabase = createServerClient();
-
-  const { data: ownerRow } = await supabase
-    .from("game_owners")
-    .select("game_id, verified_at")
-    .eq("user_id", session.userId)
-    .maybeSingle();
-  if (!ownerRow || !ownerRow.verified_at) {
+  // Multi-game: applies to the user's active game.
+  const active = await resolveActiveGameForUser(session.userId, session.activeGameId);
+  if (!active) {
     return NextResponse.json({ error: "no_verified_game" }, { status: 403 });
   }
 
+  const supabase = createServerClient();
   const { error } = await supabase
     .from("games")
     .update({
       wishlist_count: wishlistCount,
       wishlist_count_updated_at: new Date().toISOString(),
     })
-    .eq("id", ownerRow.game_id);
+    .eq("id", active.gameId);
 
   if (error) {
     console.error("wishlist update failed", error);

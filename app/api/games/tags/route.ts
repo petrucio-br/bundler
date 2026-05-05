@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
+import { resolveActiveGameForUser } from "@/lib/db/games";
 
 const MAX_TAGS = 30;
 const MAX_TAG_LENGTH = 64;
@@ -21,20 +22,17 @@ export async function GET() {
   if (!session.steamId || !session.userId) {
     return NextResponse.json({ error: "not_signed_in" }, { status: 401 });
   }
-  const supabase = createServerClient();
 
-  const { data: ownerRow } = await supabase
-    .from("game_owners")
-    .select("game_id")
-    .eq("user_id", session.userId)
-    .maybeSingle();
-  if (!ownerRow) {
+  // Multi-game: scoped to the user's active game.
+  const active = await resolveActiveGameForUser(session.userId, session.activeGameId);
+  if (!active) {
     return NextResponse.json({ error: "no_game" }, { status: 403 });
   }
 
+  const supabase = createServerClient();
   const [{ data: tags }, { data: game }] = await Promise.all([
-    supabase.from("game_tags").select("tag").eq("game_id", ownerRow.game_id),
-    supabase.from("games").select("tags_source").eq("id", ownerRow.game_id).maybeSingle(),
+    supabase.from("game_tags").select("tag").eq("game_id", active.gameId),
+    supabase.from("games").select("tags_source").eq("id", active.gameId).maybeSingle(),
   ]);
 
   return NextResponse.json({
@@ -69,29 +67,26 @@ export async function PUT(req: NextRequest) {
     if (cleanTags.length >= MAX_TAGS) break;
   }
 
-  const supabase = createServerClient();
-
-  const { data: ownerRow } = await supabase
-    .from("game_owners")
-    .select("game_id, verified_at")
-    .eq("user_id", session.userId)
-    .maybeSingle();
-  if (!ownerRow || !ownerRow.verified_at) {
+  // Multi-game: scoped to the user's active game.
+  const active = await resolveActiveGameForUser(session.userId, session.activeGameId);
+  if (!active) {
     return NextResponse.json({ error: "no_verified_game" }, { status: 403 });
   }
+
+  const supabase = createServerClient();
 
   // Replace the tags atomically (best-effort: delete + insert).
   const { error: delErr } = await supabase
     .from("game_tags")
     .delete()
-    .eq("game_id", ownerRow.game_id);
+    .eq("game_id", active.gameId);
   if (delErr) {
     console.error("tags PUT: delete failed", delErr);
     return NextResponse.json({ error: "save_failed" }, { status: 500 });
   }
 
   if (cleanTags.length > 0) {
-    const rows = cleanTags.map((t) => ({ game_id: ownerRow.game_id, tag: t }));
+    const rows = cleanTags.map((t) => ({ game_id: active.gameId, tag: t }));
     const { error: insErr } = await supabase.from("game_tags").insert(rows);
     if (insErr) {
       console.error("tags PUT: insert failed", insErr);
@@ -103,7 +98,7 @@ export async function PUT(req: NextRequest) {
   const { error: srcErr } = await supabase
     .from("games")
     .update({ tags_source: "manual" })
-    .eq("id", ownerRow.game_id);
+    .eq("id", active.gameId);
   if (srcErr) {
     console.error("tags PUT: source update failed", srcErr);
     // Non-fatal - tags are saved, just the source flag wasn't updated.

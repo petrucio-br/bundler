@@ -1,16 +1,16 @@
 // GET /api/browse
 // Query params:
-//   tab    : "eligible" | "maybe" | "no" - which set of games to return. Default "eligible".
+//   tab    : "eligible" | "yes" | "maybe" | "no" - which set of games to return. Default "eligible".
 //   sort   : "tag-overlap" | "follower-count" | "recency" - only used when tab=eligible.
 //   page   : 0-indexed page number. Only used when tab=eligible.
 //   search : substring filter on game name. Only used when tab=eligible.
 //
-// For tab=eligible: returns paginated eligible-pool result.
-// For tab=maybe / tab=no: returns the full list of games this user has swiped that direction.
+// Multi-game: the swiper game is the user's active game (session.activeGameId).
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { getEligiblePool, getSwipedGames, type SortOption } from "@/lib/db/browse";
+import { resolveActiveGameForUser } from "@/lib/db/games";
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
@@ -18,11 +18,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "not_signed_in" }, { status: 401 });
   }
 
+  const active = await resolveActiveGameForUser(session.userId, session.activeGameId);
+  if (!active) {
+    return NextResponse.json({ error: "no_setup" }, { status: 403 });
+  }
+
   const url = new URL(req.url);
   const tab = url.searchParams.get("tab") ?? "eligible";
 
   if (tab === "yes" || tab === "maybe" || tab === "no") {
-    const result = await getSwipedGames(session.userId, tab);
+    const result = await getSwipedGames(session.userId, active.gameId, tab);
     if ("error" in result) {
       if (result.error === "no_swiper_context") {
         return NextResponse.json({ error: "no_setup" }, { status: 403 });
@@ -36,7 +41,7 @@ export async function GET(req: NextRequest) {
   const sort = (url.searchParams.get("sort") as SortOption) || "tag-overlap";
   const page = Math.max(0, Number(url.searchParams.get("page") ?? "0") || 0);
   const search = url.searchParams.get("search") ?? undefined;
-  const result = await getEligiblePool(session.userId, { sort, page, search });
+  const result = await getEligiblePool(session.userId, active.gameId, { sort, page, search });
   if ("error" in result) {
     if (result.error === "no_swiper_context") {
       return NextResponse.json({ error: "no_setup" }, { status: 403 });

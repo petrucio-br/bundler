@@ -32,16 +32,19 @@ export async function POST(req: NextRequest) {
 
   const supabase = createServerClient();
 
-  // Reject if this user already has a claim row.
-  const { data: existingClaim } = await supabase
+  // Reject if this user already has a PENDING (unverified) claim. They should
+  // either complete it or abandon it before starting another. This avoids
+  // accumulating dead-end pending rows. Verified games coexist freely.
+  const { data: existingPending } = await supabase
     .from("game_owners")
     .select("id, game_id")
     .eq("user_id", session.userId)
+    .is("verified_at", null)
     .maybeSingle();
 
-  if (existingClaim) {
+  if (existingPending) {
     return NextResponse.json(
-      { error: "already_has_claim" },
+      { error: "already_has_pending_claim" },
       { status: 409 }
     );
   }

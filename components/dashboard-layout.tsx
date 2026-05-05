@@ -1,9 +1,13 @@
 "use client";
 
-// Dashboard layout for verified users: sidebar on the left with section nav,
-// main content area on the right showing the active section.
-// Uses URL hash routing (#my-game, #profile, etc.) so refresh keeps the user where they were
-// and the browser back button works as expected.
+// Dashboard layout for users with at least one verified game.
+//
+// Multi-game model:
+//   - The sidebar shows a "game switcher" - a dropdown of the user's verified games
+//   - Clicking one updates session.activeGameId and reloads the dashboard with that game's context
+//   - Below the switcher is "+ Add another game" which routes to the Add Game section
+//   - The Add Game section renders the ClaimFlow; once verified there, the user is auto-switched
+//     to the new game (the verify endpoint sets session.activeGameId)
 
 import { useEffect, useState } from "react";
 import { ClaimFlow, type ClaimState } from "@/components/claim-flow";
@@ -14,27 +18,31 @@ import { BrowseView } from "@/components/browse-view";
 import { MatchesView } from "@/components/matches-view";
 import { Footer } from "@/components/footer";
 
-type Section = "my-game" | "preferences" | "browse" | "matches";
+type Section = "my-game" | "preferences" | "browse" | "matches" | "add-game";
 
 const SECTIONS: { id: Section; label: string; description: string }[] = [
   { id: "my-game", label: "My Game", description: "Verified game, your tags, contact info" },
   { id: "preferences", label: "Match Preferences", description: "Required tags, exclusions, audience size" },
   { id: "browse", label: "Browse", description: "Eligible games, your Maybes and Nos" },
   { id: "matches", label: "Matches", description: "Mutual yes - the contact reveal" },
+  { id: "add-game", label: "+ Add another game", description: "Claim and verify another title" },
 ];
 
 const VALID_SECTION_IDS = new Set<Section>(SECTIONS.map((s) => s.id));
 
 export function DashboardLayout({
-  claim,
+  activeGame,
+  allGames,
   steamId,
 }: {
-  claim: ClaimState;
+  activeGame: ClaimState;
+  allGames: ClaimState[];
   steamId: string;
 }) {
   const [section, setSection] = useState<Section>("my-game");
+  const [switcherOpen, setSwitcherOpen] = useState(false);
+  const [switching, setSwitching] = useState(false);
 
-  // Read initial hash and listen for changes (browser back/forward + manual nav).
   useEffect(() => {
     function syncFromHash() {
       const h = window.location.hash.slice(1);
@@ -50,20 +58,37 @@ export function DashboardLayout({
   function navTo(s: Section) {
     setSection(s);
     if (typeof window !== "undefined") {
-      // Update hash without triggering a page jump
       history.pushState(null, "", `#${s}`);
     }
   }
 
+  async function switchTo(gameId: string) {
+    if (gameId === activeGame.gameId || switching) return;
+    setSwitching(true);
+    try {
+      const res = await fetch("/api/profile/active-game", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gameId }),
+      });
+      if (!res.ok) {
+        setSwitching(false);
+        return;
+      }
+      // Full reload so all sections re-fetch with the new active game's data.
+      window.location.reload();
+    } catch {
+      setSwitching(false);
+    }
+  }
+
+  const verifiedGames = allGames.filter((g) => g.verifiedAt);
+  const pendingClaim = allGames.find((g) => !g.verifiedAt) ?? null;
+
   return (
-    // Outer wrapper centers the whole sidebar+content block so it doesn't pin to the
-    // left edge on wide screens. Inner block has a max width so the layout doesn't
-    // stretch endlessly on 4K.
     <div className="min-h-screen flex justify-center">
       <div className="w-full max-w-screen-2xl flex flex-col lg:flex-row gap-6 p-6 lg:p-10">
-        {/* Sidebar - styled as a card so it visually matches the main section, not a
-            floor-to-ceiling stripe. self-start + sticky keeps it pinned at the top of
-            the viewport while the user scrolls long content sections. */}
+        {/* Sidebar */}
         <aside className="lg:w-64 lg:shrink-0 lg:sticky lg:top-6 lg:self-start bg-bg-card border border-border rounded-xl">
           <div className="p-6 space-y-6">
             <div className="space-y-1">
@@ -71,6 +96,79 @@ export function DashboardLayout({
               <p className="text-xs text-white/40 truncate" title={`Steam ID ${steamId}`}>
                 SteamID {steamId}
               </p>
+            </div>
+
+            {/* Game switcher */}
+            <div className="space-y-2">
+              <div className="text-xs uppercase tracking-wide text-white/40">Active game</div>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setSwitcherOpen((o) => !o)}
+                  disabled={switching}
+                  className="w-full text-left bg-bg-elevated hover:bg-border border border-border rounded-lg px-3 py-2 flex items-center gap-2 transition-colors"
+                >
+                  {activeGame.capsuleUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={activeGame.capsuleUrl}
+                      alt=""
+                      className="w-8 h-4 object-cover rounded shrink-0"
+                    />
+                  )}
+                  <span className="text-sm flex-1 truncate">{activeGame.name}</span>
+                  <span className="text-xs text-white/40">▼</span>
+                </button>
+                {switcherOpen && (
+                  <div
+                    className="absolute left-0 right-0 top-full mt-1 bg-bg-elevated border border-border rounded-lg shadow-lg z-20 py-1 max-h-64 overflow-auto"
+                    onMouseLeave={() => setSwitcherOpen(false)}
+                  >
+                    {verifiedGames.map((g) => (
+                      <button
+                        key={g.gameId}
+                        type="button"
+                        onClick={() => {
+                          setSwitcherOpen(false);
+                          switchTo(g.gameId);
+                        }}
+                        className={`w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-border transition-colors text-sm ${
+                          g.gameId === activeGame.gameId ? "text-white" : "text-white/70"
+                        }`}
+                      >
+                        {g.capsuleUrl && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={g.capsuleUrl} alt="" className="w-8 h-4 object-cover rounded shrink-0" />
+                        )}
+                        <span className="flex-1 truncate">{g.name}</span>
+                        {g.gameId === activeGame.gameId && <span className="text-xs text-emerald-400">active</span>}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSwitcherOpen(false);
+                        navTo("add-game");
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-border transition-colors text-sm text-accent border-t border-border"
+                    >
+                      + Add another game
+                    </button>
+                  </div>
+                )}
+              </div>
+              {pendingClaim && (
+                <p className="text-xs text-amber-300/70 leading-snug">
+                  Pending claim: <span className="font-medium">{pendingClaim.name}</span> -{" "}
+                  <button
+                    type="button"
+                    onClick={() => navTo("add-game")}
+                    className="underline hover:text-amber-200"
+                  >
+                    finish verification
+                  </button>
+                </p>
+              )}
             </div>
 
             <nav className="space-y-1">
@@ -109,12 +207,11 @@ export function DashboardLayout({
           </div>
         </aside>
 
-        {/* Main content. All sections share the same available width now -
-            forms have inputs that constrain themselves internally, grids fill the space. */}
+        {/* Main content */}
         <main className="flex-1 min-w-0">
           {section === "my-game" && (
             <div className="space-y-6">
-              <ClaimFlow initialClaim={claim} />
+              <ClaimFlow initialClaim={activeGame} />
               <GameTagsForm />
               <ProfileForm />
             </div>
@@ -122,6 +219,19 @@ export function DashboardLayout({
           {section === "preferences" && <PreferencesForm />}
           {section === "browse" && <BrowseView />}
           {section === "matches" && <MatchesView />}
+          {section === "add-game" && (
+            <div className="space-y-4">
+              <div className="bg-bg-card border border-border rounded-xl p-6">
+                <h2 className="text-xl font-semibold">Add another game</h2>
+                <p className="text-sm text-white/60 mt-1">
+                  Claim and verify another title. Each game gets its own preferences, tags,
+                  matches, and contact reveals - they're fully independent. Once verified, you can
+                  switch between games via the picker at the top of the sidebar.
+                </p>
+              </div>
+              <ClaimFlow initialClaim={pendingClaim} />
+            </div>
+          )}
         </main>
       </div>
     </div>

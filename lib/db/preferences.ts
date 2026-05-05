@@ -53,25 +53,27 @@ const DEFAULT_REQUIRED_MATCH_COUNT = 2;
 const DEFAULT_EXCLUDED_MATCH_COUNT = 1;
 
 /**
- * Get preferences for a user's game.
+ * Get preferences for a specific game owned by the given user.
  * Returns saved preferences if they exist, otherwise smart defaults derived from the game.
+ * The userId parameter is used to confirm ownership before returning data.
  */
-export async function getPreferencesForUser(
-  userId: string
+export async function getPreferencesForGame(
+  userId: string,
+  gameId: string
 ): Promise<BundlePreferencesResponse | { error: "no_verified_game" | "lookup_failed" }> {
   const supabase = createServerClient();
 
-  // Find the user's verified game.
+  // Confirm the user owns this specific game and that it's verified.
   const { data: ownerRow, error: ownerErr } = await supabase
     .from("game_owners")
     .select("game_id, verified_at")
     .eq("user_id", userId)
+    .eq("game_id", gameId)
     .maybeSingle();
   if (ownerErr) return { error: "lookup_failed" };
   if (!ownerRow || !ownerRow.verified_at) {
     return { error: "no_verified_game" };
   }
-  const gameId = ownerRow.game_id;
 
   // Game info + tags + tags_source - shared by both saved-prefs and smart-defaults branches.
   // We pull wishlist_count (self-reported, primary audience signal) for smart defaults.
@@ -244,10 +246,12 @@ export function validatePreferences(
 }
 
 /**
- * Save preferences for a user's verified game. Upserts the row.
+ * Save preferences for a specific verified game owned by the given user.
+ * Upserts the row.
  */
-export async function savePreferencesForUser(
+export async function savePreferencesForGame(
   userId: string,
+  gameId: string,
   prefs: BundlePreferences
 ): Promise<{ ok: true } | { ok: false; error: "no_verified_game" | "save_failed" }> {
   const supabase = createServerClient();
@@ -256,6 +260,7 @@ export async function savePreferencesForUser(
     .from("game_owners")
     .select("game_id, verified_at")
     .eq("user_id", userId)
+    .eq("game_id", gameId)
     .maybeSingle();
   if (!ownerRow || !ownerRow.verified_at) {
     return { ok: false, error: "no_verified_game" };

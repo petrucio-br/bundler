@@ -118,17 +118,24 @@ export async function getGameContact(gameId: string): Promise<MatchedGameContact
 }
 
 /**
- * Get all matches for a user, with the OTHER game's contact info attached.
- * Filters out matches dismissed by this side.
+ * Get all matches for a specific game owned by the user, with the OTHER game's
+ * contact info attached. Filters out matches dismissed by this side.
+ *
+ * Multi-game: caller passes the gameId for which they want matches. Each of a
+ * user's games has its own independent match relationships.
  */
-export async function getMatchesForUser(userId: string): Promise<MatchEntry[]> {
+export async function getMatchesForGame(
+  userId: string,
+  gameId: string
+): Promise<MatchEntry[]> {
   const supabase = createServerClient();
 
-  // Find this user's game.
+  // Confirm the user actually owns this game before exposing its matches.
   const { data: ownerRow } = await supabase
     .from("game_owners")
     .select("game_id")
     .eq("user_id", userId)
+    .eq("game_id", gameId)
     .maybeSingle();
   if (!ownerRow) return [];
   const myGameId = ownerRow.game_id;
