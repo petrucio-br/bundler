@@ -43,7 +43,12 @@ const MAX_TAGS = 20;
 const MAX_NOTES_LENGTH = 500;
 const MAX_PRICE_CENTS = 999999;
 const MAX_FOLLOWER_COUNT = 100_000_000;
-const MIN_MATCH_COUNT = 1;
+// Required-tag match count: 0 means "no tag filter, match any game" - what experienced
+// bundle organizers want. Excluded-tag match count: stays >= 1 since 0 would be
+// nonsensical (nothing in their excluded list would mean "exclude nothing", which is
+// the same as not having an excluded list).
+const MIN_REQUIRED_MATCH_COUNT = 0;
+const MIN_EXCLUDED_MATCH_COUNT = 1;
 const MAX_MATCH_COUNT = 5;
 // Default required-tag match count: 2 is a useful middle ground while the userbase is small.
 // 1 is too permissive (a single broad tag like "Indie" matches too much) and 3 is too strict
@@ -153,9 +158,11 @@ export async function getPreferencesForGame(
     gameId,
     preferences: {
       requiredTags: defaultRequiredTags,
+      // Default match count: 2 if the user's game has 2+ tags, else clamped to tag count.
+      // (Empty tags array gets 0, which is now a valid "no tag filter" state.)
       requiredTagsMatchCount: Math.min(
         DEFAULT_REQUIRED_MATCH_COUNT,
-        Math.max(1, defaultRequiredTags.length)
+        defaultRequiredTags.length
       ),
       excludedTags: [],
       excludedTagsMatchCount: DEFAULT_EXCLUDED_MATCH_COUNT,
@@ -184,29 +191,29 @@ export function validatePreferences(
 
   const requiredTags = sanitizeTagArray(r.requiredTags);
   if (!requiredTags.ok) return { ok: false, error: requiredTags.error };
-  if (requiredTags.value.length === 0) {
-    return { ok: false, error: "required_tags_empty" };
-  }
+  // Empty required_tags is now allowed - means "no tag requirement, bundle with anything."
+  // This matches the workflow of experienced bundle organizers who don't filter by genre.
 
   const excludedTags = sanitizeTagArray(r.excludedTags);
   if (!excludedTags.ok) return { ok: false, error: excludedTags.error };
 
   const requiredTagsMatchCount = sanitizeInt(
     r.requiredTagsMatchCount,
-    MIN_MATCH_COUNT,
+    MIN_REQUIRED_MATCH_COUNT,
     MAX_MATCH_COUNT
   );
   if (requiredTagsMatchCount === null) {
     return { ok: false, error: "invalid_required_match_count" };
   }
   // Match count can't exceed the number of tags - that would make matching impossible.
+  // (When tags array is empty, count must be 0.)
   if (requiredTagsMatchCount > requiredTags.value.length) {
     return { ok: false, error: "required_match_count_too_high" };
   }
 
   const excludedTagsMatchCount = sanitizeInt(
     r.excludedTagsMatchCount,
-    MIN_MATCH_COUNT,
+    MIN_EXCLUDED_MATCH_COUNT,
     MAX_MATCH_COUNT
   );
   if (excludedTagsMatchCount === null) {
@@ -322,7 +329,7 @@ function sanitizeInt(raw: unknown, min: number, max: number): number | null {
 
 function clampMatchCount(n: number): number {
   if (!Number.isFinite(n)) return DEFAULT_REQUIRED_MATCH_COUNT;
-  return Math.min(MAX_MATCH_COUNT, Math.max(MIN_MATCH_COUNT, Math.floor(n)));
+  return Math.min(MAX_MATCH_COUNT, Math.max(MIN_REQUIRED_MATCH_COUNT, Math.floor(n)));
 }
 
 function roundToNice(n: number): number {
