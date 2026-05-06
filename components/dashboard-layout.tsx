@@ -17,6 +17,8 @@ import { GameTagsForm } from "@/components/game-tags-form";
 import { BrowseView } from "@/components/browse-view";
 import { MatchesView } from "@/components/matches-view";
 import { Footer } from "@/components/footer";
+import { ShareBundler } from "@/components/share-bundler";
+import { FLAGS } from "@/lib/featureFlags";
 
 type Section = "my-game" | "preferences" | "browse" | "matches" | "add-game";
 
@@ -200,6 +202,12 @@ export function DashboardLayout({
                 Sign out
               </button>
             </form>
+
+            {FLAGS.showGrowthNudges && (
+              <div className="pt-4 border-t border-border">
+                <ShareBundler variant="compact" />
+              </div>
+            )}
 
             <div className="pt-4 border-t border-border">
               <Footer />

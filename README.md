@@ -257,4 +257,4 @@ Either way, [follow @LonePiggyGames](https://x.com/LonePiggyGames) for game upda
 
 ### Hat tip
 
-The original idea came from **hubecube** (developer of [Astronomics](https://store.steampowered.com/app/1975520/Astronomics/)) on the *How To Market A Game* Discord. He floated it as a joke. I said "hold my beer." Here we are. Thanks Hubecube.
+The original idea came from **hubecube** (developer of [Astronomics](https://store.steampowered.com/app/1975520/Astronomics/)). He floated it as a joke on Discord. I said "hold my beer." Here we are. Thanks Hubecube.

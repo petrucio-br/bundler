@@ -46,6 +46,66 @@ export default async function HomePage({
             Sign in through Steam
           </Link>
 
+          <details className="group text-left">
+            <summary className="text-xs text-white/50 hover:text-white/80 cursor-pointer select-none list-none flex items-center gap-1">
+              <span className="transition-transform group-open:rotate-90">▸</span>
+              What does Steam sign-in actually share?
+            </summary>
+            <div className="mt-3 space-y-3 text-xs text-white/60 leading-relaxed pl-3 border-l border-border">
+              <p>
+                <strong className="text-white/80">Just one thing: your numeric SteamID</strong> (e.g.{" "}
+                <span className="font-mono">76561198717070149</span>). That's it.
+              </p>
+              <p>
+                Steam OpenID does NOT give Bundler your email, your password, your friends list,
+                your owned games, your payment info, or anything else. We can't email you (we ask
+                separately, and that field is optional). We can't post to your profile, can't
+                message your friends, can't do anything on your behalf.
+              </p>
+              <p>
+                The flow is: Steam confirms <em>"yes, this person owns this account"</em> → you're
+                signed in. Read the Steam confirmation screen yourself when you click Sign in - it
+                lists exactly what's shared. Compare to Google or Discord OAuth, which expose your
+                email, name, profile photo, and often more.
+              </p>
+              <p className="text-white/50">
+                One honest caveat: if your Steam profile is set to public, anyone with your SteamID
+                can read public profile data via Steam's APIs. That's how Steam profiles work, not
+                Bundler-specific. We don't read profile data beyond verifying you own the SteamID.
+              </p>
+              <p>
+                Sources you can verify:{" "}
+                <a
+                  href="https://steamcommunity.com/dev"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-accent hover:text-accent-hover underline"
+                >
+                  Steam developer documentation
+                </a>
+                ,{" "}
+                <a
+                  href="https://openid.net/specs/openid-authentication-2_0.html"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-accent hover:text-accent-hover underline"
+                >
+                  OpenID 2.0 spec
+                </a>
+                , and the{" "}
+                <a
+                  href="https://github.com/petrucio-br/bundler/blob/main/lib/auth/steam.ts"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-accent hover:text-accent-hover underline"
+                >
+                  Bundler source code
+                </a>{" "}
+                (it's all open).
+              </p>
+            </div>
+          </details>
+
           {error && (
             <p className="text-sm text-red-400">
               {error === "steam_verification_failed"

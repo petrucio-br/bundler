@@ -2,6 +2,8 @@
 // Used for match notifications. Designed to no-op cleanly when not configured,
 // so local dev and unconfigured production environments don't blow up - they just
 // skip sending and log a notice.
+
+import { FLAGS } from "@/lib/featureFlags";
 //
 // Setup:
 //   1. Sign up at https://resend.com (free 3k emails/month, no credit card).
@@ -94,6 +96,10 @@ export function renderMatchEmail(p: MatchEmailParams): { subject: string; html: 
   if (p.matchedDevDiscord) contactLines.push(`Discord: ${p.matchedDevDiscord}`);
   if (contactLines.length === 0) contactLines.push("(no contact info provided)");
 
+  const growthPsText = FLAGS.showGrowthNudges
+    ? "PS: This match worked because both of you signed up. Want more matches like this? Share Bundler with another indie dev whose game would pair well with yours - bundler.games. Every new dev grows your pool, not just ours."
+    : "";
+
   const text = [
     `Good news - your game ${p.recipientGameName} just matched with ${p.matchedGameName} on Bundler.`,
     "",
@@ -103,6 +109,8 @@ export function renderMatchEmail(p: MatchEmailParams): { subject: string; html: 
     p.matchedDevNotes ? `Their notes: ${p.matchedDevNotes}` : "",
     "",
     `View this match on Bundler: ${p.matchesPageUrl}`,
+    "",
+    growthPsText,
     "",
     "- Bundler",
   ]
@@ -132,6 +140,13 @@ export function renderMatchEmail(p: MatchEmailParams): { subject: string; html: 
       <p style="margin: 24px 0 0;">
         <a href="${escapeAttr(p.matchesPageUrl)}" style="display: inline-block; background: #7c5cff; color: #fff; padding: 10px 18px; border-radius: 6px; text-decoration: none;">View match on Bundler</a>
       </p>
+      ${
+        FLAGS.showGrowthNudges
+          ? `<p style="margin: 24px 0 0; padding: 12px; background: #f4f4f6; border-radius: 6px; color: #444; font-size: 13px; line-height: 1.5;">
+              <strong>PS:</strong> This match worked because both of you signed up. Want more matches like this? Share <a href="https://bundler.games" style="color: #7c5cff;">bundler.games</a> with another indie dev whose game would pair well with yours. Every new dev grows your pool, not just ours.
+            </p>`
+          : ""
+      }
       <p style="margin: 32px 0 0; color: #888; font-size: 12px;">
         You're getting this because both of you swiped Yes on each other's game on bundler.games.
       </p>

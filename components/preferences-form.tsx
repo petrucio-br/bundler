@@ -10,6 +10,8 @@
 // literal text if no matches). Esc closes the dropdown.
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ShareBundler } from "@/components/share-bundler";
+import { FLAGS } from "@/lib/featureFlags";
 
 interface BundlePreferences {
   requiredTags: string[];
@@ -46,6 +48,10 @@ export function PreferencesForm() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  // Tracks "did the most recent save transition us from defaults to a saved row?"
+  // We use it to show the network-effects nudge only on the first successful save,
+  // not every time the user tweaks their preferences afterward.
+  const [justFirstSaved, setJustFirstSaved] = useState(false);
 
   // Load preferences + Steam tag list in parallel on mount.
   useEffect(() => {
@@ -95,8 +101,10 @@ export function PreferencesForm() {
         setError(SAVE_ERROR_MESSAGES[data.error] ?? `Save failed: ${data.error ?? "unknown"}`);
         return;
       }
+      const wasFirstSave = isDefault;
       setIsDefault(false);
       setSavedAt(Date.now());
+      if (wasFirstSave) setJustFirstSaved(true);
     } catch {
       setError("Network error during save.");
     } finally {
@@ -293,6 +301,13 @@ export function PreferencesForm() {
           )}
           {error && <span className="text-sm text-red-400">{error}</span>}
         </div>
+
+        {FLAGS.showGrowthNudges && justFirstSaved && (
+          <ShareBundler
+            variant="full"
+            context="Your preferences are saved - you're now in the matching pool. Want to grow that pool? Sharing Bundler with one indie friend on average doubles your effective match opportunities."
+          />
+        )}
       </form>
     </section>
   );
