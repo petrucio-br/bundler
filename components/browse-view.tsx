@@ -10,6 +10,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatInt } from "@/lib/format";
+import { ShareBundler } from "@/components/share-bundler";
+import { FLAGS } from "@/lib/featureFlags";
 
 interface BrowseGame {
   gameId: string;
@@ -225,18 +227,28 @@ export function BrowseView() {
       ) : games.length === 0 ? (
         <EmptyState tab={tab} />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
-          {games.map((g) => (
-            <GameCard
-              key={g.gameId}
-              game={g}
-              tab={tab}
-              busy={actionPending === g.gameId}
-              onSwipe={handleSwipe}
-              onRevert={handleRevert}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+            {games.map((g) => (
+              <GameCard
+                key={g.gameId}
+                game={g}
+                tab={tab}
+                busy={actionPending === g.gameId}
+                onSwipe={handleSwipe}
+                onRevert={handleRevert}
+              />
+            ))}
+          </div>
+          {FLAGS.showGrowthNudges && tab === "yes" && (
+            <div className="mt-6">
+              <ShareBundler
+                variant="full"
+                context="Waiting on these devs to swipe back? While you're here - inviting another dev to Bundler increases the size of YOUR future match pool. Any indie dev in your network who isn't on Bundler yet is leaving a match-multiplier on the table for both of you."
+              />
+            </div>
+          )}
+        </>
       )}
 
       {/* Pagination (only on eligible) */}
@@ -444,8 +456,16 @@ function EmptyState({ tab }: { tab: Tab }) {
           ? "Nothing here yet. Games you mark Maybe in Eligible will land here."
           : "Nothing here yet. Games you mark No in Eligible will land here.";
   return (
-    <div className="bg-bg-elevated border border-dashed border-border rounded-lg p-6 text-center text-sm text-white/50">
-      {message}
+    <div className="space-y-4">
+      <div className="bg-bg-elevated border border-dashed border-border rounded-lg p-6 text-center text-sm text-white/50">
+        {message}
+      </div>
+      {FLAGS.showGrowthNudges && tab === "eligible" && (
+        <ShareBundler
+          variant="full"
+          context="Pool feels small? It is - Bundler is brand new. Every indie dev who joins because of you increases YOUR match probability."
+        />
+      )}
     </div>
   );
 }
