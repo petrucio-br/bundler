@@ -11,9 +11,9 @@ export const FLAGS = {
    * - Post-save-preferences nudge
    * - Match notification email PS line
    *
-   * Off by default while the userbase is small - the prompts read awkward when
-   * you're one of three users testing each other's flows. Flip to true when you
-   * actually want to start growing.
+   * On by default - enabled for the public launch. Set the env var to "false"
+   * to disable (e.g. for a quiet dev environment with a handful of testers
+   * where the prompts would read awkward).
    */
-  showGrowthNudges: process.env.NEXT_PUBLIC_SHOW_GROWTH_NUDGES === "true",
+  showGrowthNudges: process.env.NEXT_PUBLIC_SHOW_GROWTH_NUDGES !== "false",
 };

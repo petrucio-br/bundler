@@ -149,7 +149,7 @@ export function PreferencesForm() {
         <div>
           <h2 className="text-xl font-semibold">Match preferences</h2>
           <p className="text-sm text-white/60 mt-1">
-            What kind of games would you cross-promote with? Bundles, store-page link swaps,
+            What kind of games would you cross-promote with? Bundles, Curator picks,
             news-post shoutouts - anything mutual. Other devs whose games match your filters
             (and who have you in their filters) will see your game in their pool.
           </p>
@@ -261,7 +261,7 @@ export function PreferencesForm() {
             value={prefs.notes}
             onChange={(e) => setPrefs({ ...prefs, notes: e.target.value })}
             className="w-full bg-bg-elevated border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent resize-y"
-            placeholder="e.g. Open to bundles, store-page link swaps, news-post shoutouts. EU timezone, prefer fast email replies."
+            placeholder="e.g. Open to bundles, Curator picks, news-post shoutouts. EU timezone, prefer fast email replies."
           />
           <p className="text-xs text-white/40 mt-1 text-right">{prefs.notes.length} / 500</p>
         </div>

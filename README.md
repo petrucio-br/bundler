@@ -3,7 +3,7 @@
 Cross-promo matchmaking for indie devs on Steam. Sign in with Steam, claim your
 game, set your match preferences, find compatible partners. The name comes from
 the canonical use case (Steam bundles), but mutual-yes matches work just as well
-for store-page link swaps, news-post shoutouts, or any other cross-promotional
+for Curator picks, news-post shoutouts, or any other cross-promotional
 move where two indie devs want to put each other's games in front of each other's
 audiences.
 
@@ -23,6 +23,16 @@ or downtime. Use at your own risk. See `LICENSE` for the full legal disclaimer.
 
 If something is broken, file an issue and I'll do my best, but I'm not on the
 hook for any consequences.
+
+---
+
+## Built with AI assistance
+
+Bundler was developed with significant help from [Claude Code](https://www.anthropic.com/claude-code). I'd never have shipped this as a solo dev in days otherwise.
+
+Every line was reviewed by me before shipping. The whole repo is right here - if you want to verify what the tool does and how, the code is open. Read it, audit it, fork it.
+
+If "made with AI assistance" is a dealbreaker for you, the source is still free for you to use however you want. Honesty about the toolchain is the least you should expect from any project right now.
 
 ---
 
@@ -251,7 +261,7 @@ MIT. See `LICENSE`.
 
 Bundler was built by [Petrucio](https://x.com/PetrucioBR) at [Lone Piggy](https://x.com/LonePiggyGames) as part of the launch campaign for [Kegs of Eternity](https://store.steampowered.com/app/4641550), a deck-building roguelite dungeon crawler shipping on Steam in early 2027. The matching pain was real - finding cross-promo partners as a solo dev is mostly Discord DMs and luck - so I built the tool I wished existed.
 
-If Bundler helped you find a partnership that worked out (a bundle, a store-page link swap, a news-post shoutout, anything), [wishlist AND share Kegs of Eternity](https://store.steampowered.com/app/4641550) as payment. If it didn't, do that anyway.
+If Bundler helped you find a partnership that worked out (a bundle, a Curator pick, a news-post shoutout, anything), [wishlist AND share Kegs of Eternity](https://store.steampowered.com/app/4641550) as payment. If it didn't, do that anyway.
 
 Either way, [follow @LonePiggyGames](https://x.com/LonePiggyGames) for game updates or [open an issue](https://github.com/petrucio-br/bundler/issues) if you've got feedback.
 

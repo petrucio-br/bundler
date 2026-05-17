@@ -11,7 +11,7 @@
 
 import { useState } from "react";
 
-const DEFAULT_SHARE_TEXT = `Bundler (https://bundler.games) is a free open-source tool for indie devs to find cross-promo partners on Steam - bundles, store-page links, news shoutouts, anything mutual. Sign in with Steam, claim your game, browse compatible devs. Mutual-yes matching, no middleman. Three minutes to set up.`;
+const DEFAULT_SHARE_TEXT = `Bundler (https://bundler.games) is a free open-source tool for indie devs to find cross-promo partners on Steam - bundles, Curator picks, news shoutouts, anything mutual. Sign in with Steam, claim your game, browse compatible devs. Mutual-yes matching, no middleman. Three minutes to set up.`;
 
 export function ShareBundler({
   variant,
@@ -57,7 +57,7 @@ export function ShareBundler({
           {copied ? "Copied!" : "Copy invite text"}
         </button>
         <p className="text-xs text-white/40 leading-snug">
-          More devs = more matches for you. Self-interest, not a favor.
+          More devs = more matches for you. Everybody wins.
         </p>
       </div>
     );
@@ -68,8 +68,8 @@ export function ShareBundler({
       {context && <p className="text-sm text-white/80">{context}</p>}
       <p className="text-xs text-white/60 leading-relaxed">
         Every indie dev who joins makes <strong className="text-white/80">your</strong> pool bigger
-        and your matches more likely. Bundler's value scales with size - sharing it is a
-        self-interested act, not a favor to the maintainer. Edit the text below if you want
+        and your matches more likely. Bundler's value scales with size - the more devs in the pool,
+        the better it works for everyone, including you. Edit the text below if you want
         to customize for the platform you're posting on, then copy.
       </p>
       <textarea

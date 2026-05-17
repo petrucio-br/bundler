@@ -19,12 +19,24 @@ export default async function HomePage({
   const error = params.error;
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-6 py-12">
+    <main className="min-h-screen flex flex-col items-center px-6 pt-16 pb-12">
       <div className="max-w-2xl w-full text-center space-y-8">
+        <video
+          className="w-full rounded-xl border border-border shadow-2xl bg-black"
+          controls
+          preload="metadata"
+          playsInline
+          poster="/bundler-launch-poster.jpg"
+        >
+          <source src="/bundler-launch.mp4" type="video/mp4" />
+          Your browser does not support embedded video. Watch it at{" "}
+          <a href="/bundler-launch.mp4">bundler-launch.mp4</a>.
+        </video>
+
         <div className="space-y-3">
           <h1 className="text-5xl font-bold tracking-tight">Bundler</h1>
           <p className="text-xl text-white/70">
-            Find indie devs whose games would pair well with yours - for bundles, store-page links, news shoutouts, or any other cross-promotion.
+            Find indie devs whose games would pair well with yours - for bundles, news shoutouts, Curator picks, or any other cross-promotion.
           </p>
         </div>
 
@@ -39,12 +51,12 @@ export default async function HomePage({
             </ol>
           </div>
 
-          <Link
+          <a
             href="/api/auth/steam/login"
             className="inline-flex items-center justify-center gap-2 w-full bg-steam hover:bg-steam-accent transition-colors text-white font-medium py-3 px-6 rounded-lg"
           >
             Sign in through Steam
-          </Link>
+          </a>
 
           <details className="group text-left">
             <summary className="text-xs text-white/50 hover:text-white/80 cursor-pointer select-none list-none flex items-center gap-1">
@@ -75,33 +87,33 @@ export default async function HomePage({
               </p>
               <p>
                 Sources you can verify:{" "}
-                <a
-                  href="https://steamcommunity.com/dev"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-accent hover:text-accent-hover underline"
-                >
-                  Steam developer documentation
-                </a>
-                ,{" "}
-                <a
-                  href="https://openid.net/specs/openid-authentication-2_0.html"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-accent hover:text-accent-hover underline"
-                >
-                  OpenID 2.0 spec
-                </a>
-                , and the{" "}
-                <a
-                  href="https://github.com/petrucio-br/bundler/blob/main/lib/auth/steam.ts"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-accent hover:text-accent-hover underline"
-                >
-                  Bundler source code
-                </a>{" "}
+                <a href="https://steamcommunity.com/dev" target="_blank" rel="noreferrer" className="text-accent hover:text-accent-hover underline">Steam developer documentation</a>,{" "}
+                <a href="https://openid.net/specs/openid-authentication-2_0.html" target="_blank" rel="noreferrer" className="text-accent hover:text-accent-hover underline">OpenID 2.0 spec</a>, and the{" "}
+                <a href="https://github.com/petrucio-br/bundler/blob/main/lib/auth/steam.ts" target="_blank" rel="noreferrer" className="text-accent hover:text-accent-hover underline">Bundler source code</a>{" "}
                 (it's all open).
+              </p>
+            </div>
+          </details>
+
+          <details className="group text-left">
+            <summary className="text-xs text-white/50 hover:text-white/80 cursor-pointer select-none list-none flex items-center gap-1">
+              <span className="transition-transform group-open:rotate-90">▸</span>
+              Was this built with AI?
+            </summary>
+            <div className="mt-3 space-y-3 text-xs text-white/60 leading-relaxed pl-3 border-l border-border">
+              <p>
+                Yes. Bundler was developed with significant help from{" "}
+                <a href="https://www.anthropic.com/claude-code" target="_blank" rel="noreferrer" className="text-accent hover:text-accent-hover underline">Claude Code</a>,
+                an AI coding tool. I'd never have shipped it as a solo dev in days otherwise.
+              </p>
+              <p>
+                Every line was reviewed by me before shipping. The whole codebase is open source on{" "}
+                <a href="https://github.com/petrucio-br/bundler" target="_blank" rel="noreferrer" className="text-accent hover:text-accent-hover underline">GitHub</a> -
+                if you want to verify what the tool does and how, the code is right there. Read it, audit it, fork it.
+              </p>
+              <p>
+                If "made with AI assistance" is a dealbreaker for you, the source is still free to use however you want.
+                Honesty about the toolchain is the least you should expect from any project right now.
               </p>
             </div>
           </details>

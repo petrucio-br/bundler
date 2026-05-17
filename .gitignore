@@ -48,3 +48,9 @@ next-env.d.ts
 
 # Local-only notes / cheatsheets / scratch (never committed)
 /notes/
+
+# Claude skills + agent config - local tooling, not part of the shipped app
+/.claude/
+
+# Launch video work-in-progress: VO audio, screenshots, Remotion project, renders
+/launch_video/

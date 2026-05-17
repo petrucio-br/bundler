@@ -103,7 +103,7 @@ export function renderMatchEmail(p: MatchEmailParams): { subject: string; html: 
   const text = [
     `Good news - your game ${p.recipientGameName} just matched with ${p.matchedGameName} on Bundler.`,
     "",
-    "Both of you marked each other as interested in cross-promoting (bundle, store-page link swap, news-post shoutout, whatever you decide). Here's how to reach them:",
+    "Both of you marked each other as interested in cross-promoting (bundle, Curator pick, news-post shoutout, whatever you decide). Here's how to reach them:",
     ...contactLines,
     "",
     p.matchedDevNotes ? `Their notes: ${p.matchedDevNotes}` : "",
@@ -123,7 +123,7 @@ export function renderMatchEmail(p: MatchEmailParams): { subject: string; html: 
       <p style="margin: 0 0 16px; line-height: 1.5;">
         Your game <strong>${escapeHtml(p.recipientGameName)}</strong> just matched with
         <strong><a href="${escapeAttr(p.matchedGameStoreUrl)}" style="color: #7c5cff;">${escapeHtml(p.matchedGameName)}</a></strong>.
-        Both of you marked each other as interested in cross-promoting - bundle, store-page link swap, news-post shoutout, or whatever you decide together.
+        Both of you marked each other as interested in cross-promoting - bundle, Curator pick, news-post shoutout, or whatever you decide together.
       </p>
       <h2 style="font-size: 16px; margin: 24px 0 8px;">Contact</h2>
       <ul style="margin: 0 0 16px 20px; padding: 0; line-height: 1.6;">
